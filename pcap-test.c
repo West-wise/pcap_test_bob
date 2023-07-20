@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 			printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(pcap));
 			break;
 		}
-		printf("%u bytes captured\n", header->caplen);
+		
 		struct libnet_ethernet_hdr *ether_hdr = (struct libnet_ethernet_hdr *)packet;
 		struct libnet_ipv4_hdr *ipv4_hdr = (struct libnet_ipv4_hdr *)(packet+sizeof(*ether_hdr));
 		struct libnet_tcp_hdr *tcp_hdr = (struct libnet_tcp_hdr *)(packet+sizeof(*ipv4_hdr)+sizeof(*ether_hdr));
@@ -180,6 +180,10 @@ int main(int argc, char* argv[]) {
 		if(check_tcp(ipv4_hdr->ip_p))
 		{
 			u_int32_t total_hdr_len = 14 + (ipv4_hdr->ip_hl)*4 + (tcp_hdr->th_off)*4;
+			u_int32_t payload_len = header->caplen - total_hdr_len;
+			printf("%u bytes captured\n", header->caplen);
+			printf("total header length : %u\n", total_hdr_len);
+			printf("Payload_len : %u", payload_len);
 			printf("\n");
 			printf("PACKET NO.%d\n",num);
 			printf("MAC : ");
@@ -194,16 +198,26 @@ int main(int argc, char* argv[]) {
 			printf("\n");
 			print_ip(ipv4_hdr);
 			printf("Payload Data : ");
-			for(int i=total_hdr_len; i<total_hdr_len+10;i++){
-				printf("|%02x",packet[i]);
+			if(payload_len== 0){
+				printf(" 0Byte\n");
 			}
+			if(payload_len <=10){
+				for(int i=total_hdr_len; i<total_hdr_len+payload_len; i++){
+					printf("|%02x|",packet[i]);
+				}
+			}
+			else{
+				for(int i=total_hdr_len; i<total_hdr_len+10;i++){
+					printf("|%02x|",packet[i]);
+				}	
+			}
+			
 			printf("\n");
 			printf("=======================================\n");
-			num++;
-		}
 		
+		}
+		num++;
 	}
-
 	pcap_close(pcap);
 }
 
